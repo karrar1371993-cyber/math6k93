@@ -6,7 +6,6 @@
   <title>سجل متابعة صفية شهري متقدم</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -93,9 +92,15 @@
             <i class="fa-solid fa-users-gear ml-1"></i> إدارة التلاميذ
           </button>
         </div>
-        <div class="relative w-full lg:w-96">
-          <i class="fa-solid fa-magnifying-glass absolute right-4 top-3.5 text-slate-400"></i>
-          <input id="search" oninput="renderTable()" class="w-full border border-slate-300 rounded-xl pr-11 pl-4 py-2.5 outline-none focus:ring-2 focus:ring-sky-500" placeholder="ابحث باسم التلميذ...">
+        <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+          <div class="relative w-full lg:w-80">
+            <i class="fa-solid fa-magnifying-glass absolute right-4 top-3.5 text-slate-400"></i>
+            <input id="search" oninput="renderTable()" class="w-full border border-slate-300 rounded-xl pr-11 pl-4 py-2.5 outline-none focus:ring-2 focus:ring-sky-500" placeholder="ابحث باسم التلميذ...">
+          </div>
+          <select id="evaluationFilter" onchange="renderTable()" class="border border-slate-300 rounded-xl px-3 py-2.5 outline-none bg-white">
+            <option value="all">كل التقييمات</option><option value="ممتاز">ممتاز</option><option value="جيد جداً">جيد جداً</option><option value="جيد">جيد</option><option value="متوسط">متوسط</option><option value="مقبول">مقبول</option><option value="ضعيف">ضعيف</option>
+          </select>
+          <label class="flex items-center gap-2 border border-slate-300 rounded-xl px-3 py-2.5 bg-white text-sm font-bold whitespace-nowrap"><input id="incompleteOnly" type="checkbox" onchange="renderTable()" class="accent-sky-600"> درجات ناقصة فقط</label>
         </div>
       </div>
     </div>
@@ -107,9 +112,42 @@
       <div class="stat-card bg-white border border-slate-200 rounded-2xl p-4 shadow-sm"><div class="flex items-center justify-between"><div><div class="text-xs text-slate-500">أعلى درجة نهائية</div><div id="statHighest" class="text-2xl font-extrabold mt-1">—</div></div><i class="fa-solid fa-star text-amber-500 text-xl"></i></div></div>
     </div>
 
+    <section class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4">
+      <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4">
+        <div class="flex items-center justify-between gap-3 mb-4"><div><h2 class="font-extrabold text-lg">تحليل مستويات الصف</h2><p class="text-xs text-slate-500 mt-1">توزيع التلاميذ حسب الدرجة النهائية للشعبة الحالية.</p></div><i class="fa-solid fa-chart-pie text-sky-500 text-xl"></i></div>
+        <div id="evaluationDistribution" class="space-y-3"></div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4"><div><h2 class="font-extrabold text-lg">تطور مستوى التلميذ</h2><p class="text-xs text-slate-500 mt-1">مقارنة الدرجة النهائية عبر الأشهر المسجلة.</p></div><select id="progressStudent" onchange="renderProgress()" class="border border-slate-300 rounded-xl px-3 py-2 outline-none bg-white w-full sm:w-64"><option value="">اختر تلميذاً</option></select></div>
+        <div id="progressContent" class="text-sm text-slate-500">اختر تلميذاً لعرض تطور درجاته.</div>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-4">
+      <div class="xl:col-span-2 bg-white border border-slate-200 rounded-2xl shadow-sm p-4">
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <div><h2 class="font-extrabold text-lg">ترتيب التلاميذ حسب الدرجة النهائية</h2><p class="text-xs text-slate-500 mt-1">الترتيب داخل الشعبة الحالية، ويُحدّث تلقائياً بعد كل تعديل.</p></div>
+          <i class="fa-solid fa-ranking-star text-amber-500 text-xl"></i>
+        </div>
+        <div class="overflow-auto rounded-xl border border-slate-200"><table class="w-full text-sm"><thead class="bg-slate-50"><tr><th class="p-2 text-right">الترتيب</th><th class="p-2 text-right">التلميذ</th><th class="p-2">الدرجة النهائية</th><th class="p-2">التقييم</th><th class="p-2">الحالة</th></tr></thead><tbody id="rankingBody"></tbody></table></div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4">
+        <div class="flex items-center justify-between gap-3 mb-4"><div><h2 class="font-extrabold text-lg">تنبيهات المتابعة</h2><p class="text-xs text-slate-500 mt-1">تلاميذ يحتاجون إلى استكمال أو متابعة.</p></div><i class="fa-solid fa-triangle-exclamation text-rose-500 text-xl"></i></div>
+        <div id="alertsPanel" class="space-y-2"></div>
+      </div>
+    </section>
+
+    <section class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 mb-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div><h2 class="font-extrabold text-lg">ملخص الشعبة</h2><p class="text-xs text-slate-500 mt-1">ملخص سريع للنتائج الحالية مع إمكانية فتح التقرير الكامل.</p></div>
+        <button type="button" onclick="openClassReport()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl font-bold"><i class="fa-solid fa-file-lines ml-1"></i> تقرير الشعبة</button>
+      </div>
+      <div id="classSummary" class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2 mt-4"></div>
+    </section>
+
     <div id="emptyState" class="hidden bg-white border border-dashed border-slate-300 rounded-2xl p-12 text-center">
       <i class="fa-solid fa-user-plus text-5xl text-slate-300 mb-4"></i>
-      <h2 class="text-xl font-bold mb-2">لا يوجد طلاب حتى الآن</h2>
+      <h2 class="text-xl font-bold mb-2">لا يوجد تلاميذ حتى الآن</h2>
       <p class="text-slate-500 mb-5">ابدأ بإضافة التلاميذ أو استيرادهم من ملف.</p>
       <button type="button" onclick="openStudentsModal()" class="bg-sky-600 text-white px-5 py-2.5 rounded-xl font-bold">إدارة التلاميذ</button>
     </div>
@@ -163,22 +201,6 @@
       <button type="button" onclick="closeModal('reportModal')" class="text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div id="reportContent" class="p-5"></div>
-  </div>
-</div>
-
-<div id="qrModal" class="hidden fixed inset-0 modal-backdrop z-[130] items-center justify-center p-4">
-  <div class="modal bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 text-center">
-    <div class="flex justify-between items-center mb-4"><div class="text-right"><h2 class="text-xl font-extrabold">QR ولي الأمر</h2><p id="qrStudentName" class="text-sm text-slate-500"></p></div><button type="button" onclick="closeModal('qrModal')" class="text-slate-400 text-xl"><i class="fa-solid fa-xmark"></i></button></div>
-    <div id="qrBox" class="bg-white border rounded-2xl p-5 mx-auto w-fit"></div>
-    <p class="text-xs text-slate-500 mt-4">رمز خاص بالتلميذ والشعبة لعرض درجات الأشهر المحفوظة.</p>
-    <div class="flex gap-2 mt-4"><button type="button" onclick="printQr()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold"><i class="fa-solid fa-print ml-1"></i>طباعة QR</button><button type="button" onclick="downloadQr()" class="flex-1 bg-violet-600 text-white py-2.5 rounded-xl font-bold"><i class="fa-solid fa-download ml-1"></i>حفظ الصورة</button></div>
-  </div>
-</div>
-
-<div id="classReportModal" class="hidden fixed inset-0 modal-backdrop z-[120] items-center justify-center p-4">
-  <div class="modal bg-white w-full max-w-5xl rounded-2xl shadow-2xl">
-    <div class="p-5 border-b flex justify-between items-center"><div><h2 class="text-xl font-extrabold">تقرير الشعبة</h2><p id="classReportSubtitle" class="text-sm text-slate-500"></p></div><button type="button" onclick="closeModal('classReportModal')" class="text-slate-400 text-xl"><i class="fa-solid fa-xmark"></i></button></div>
-    <div id="classReportContent" class="p-5"></div>
   </div>
 </div>
 
@@ -296,7 +318,6 @@ function setup(){
   $('subject').addEventListener('change',()=>{state.settings.subject=$('subject').value;saveState();renderTable()});
   $('month').addEventListener('change',()=>{state.settings.month=$('month').value;saveState();renderTable()});
   renderTable();
-  openParentFromHash();
 }
 
 function openModal(id){$(id).classList.remove('hidden');$(id).classList.add('flex')}
@@ -344,22 +365,22 @@ function importStudentsFile(e){
   e.target.value='';
 }
 
-function continuousTotal(data){return CATEGORIES.reduce((sum,[key,,max])=>sum+Math.min(max,Number(data[key]||0)),0)}
-function finalGrade(data){return (continuousTotal(data)+Number(data.monthlyExam||0))/2}
-function fmt(n){return Number.isInteger(Number(n))?Number(n):Number(n).toFixed(1)}
+function continuousTotal(data){return Math.round(CATEGORIES.reduce((sum,[key,,max])=>sum+Math.min(max,Number(data[key]||0)),0))}
+function finalGrade(data){return Math.round((continuousTotal(data)+Math.round(Number(data.monthlyExam||0)))/2)}
+function automaticEvaluation(final){const n=Math.round(Number(final||0));if(n<50)return 'ضعيف';if(n<60)return 'مقبول';if(n<70)return 'متوسط';if(n<80)return 'جيد';if(n<90)return 'جيد جداً';return 'ممتاز'}
+function fmt(n){return Math.round(Number(n)||0)}
 function setCategoryScore(id,key,value){
   const d=ensureStudentData(id);
   const cat=CATEGORIES.find(x=>x[0]===key);
   if(!cat)return;
-  d[key]=Math.max(0,Math.min(cat[2],Number(value)||0));
+  d[key]=Math.round(Math.max(0,Math.min(cat[2],Number(value)||0)));
   saveState();renderTable();
 }
 function setMonthlyExam(id,value){
   const d=ensureStudentData(id);
-  d.monthlyExam=Math.max(0,Math.min(100,Number(value)||0));
+  d.monthlyExam=Math.round(Math.max(0,Math.min(100,Number(value)||0)));
   saveState();renderTable();
 }
-function setOverall(id,value){ensureStudentData(id).overall=value;saveState();renderTable()}
 
 function renderHeader(){
   $('mainTable').querySelector('thead').innerHTML=`<tr>
@@ -385,14 +406,10 @@ function renderDesktopRow(s,index){
     <td class="px-3 py-3 text-center font-extrabold">${cont} / 100</td>
     <td class="px-2 py-2 border-r border-slate-200 text-center"><input type="number" inputmode="numeric" min="0" max="100" value="${exam}" onchange="setMonthlyExam('${s.id}',this.value)" class="score-input border rounded-lg text-center py-1.5"></td>
     <td class="px-3 py-3 text-center font-extrabold">${fmt(final)} / 100</td>
-    <td class="px-3 py-3 text-center"><select onchange="setOverall('${s.id}',this.value)" class="border rounded-lg px-2 py-1.5">
-      <option value="" ${!d.overall?'selected':''}>اختر</option>
-      ${['ممتاز','جيد جداً','جيد','مقبول','بحاجة لتحسين'].map(x=>`<option ${d.overall===x?'selected':''}>${x}</option>`).join('')}
-    </select></td>
+    <td class="px-3 py-3 text-center font-bold">${automaticEvaluation(final)}</td>
     <td class="sticky-actions px-2 py-2 text-center border-r border-slate-200">
       <div class="flex gap-1 justify-center flex-wrap">
         <button type="button" onclick="openReport('${s.id}')" class="bg-sky-600 hover:bg-sky-700 text-white px-3 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-chart-column ml-1"></i>درجات</button>
-        <button type="button" onclick="openQrModal('${s.id}')" class="bg-violet-600 hover:bg-violet-700 text-white px-3 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-qrcode ml-1"></i>QR</button>
         <button type="button" onclick="resetStudentMonth('${s.id}')" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-rotate-left ml-1"></i>تصفير</button>
         <button type="button" onclick="deleteStudent('${s.id}')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-trash ml-1"></i>حذف</button>
       </div>
@@ -409,58 +426,190 @@ function renderMobileCard(s,index){
       <label class="block"><span class="text-xs font-bold text-slate-600">الامتحان الشهري / ١٠٠</span><input type="number" inputmode="numeric" min="0" max="100" value="${Number(d.monthlyExam)||0}" onchange="setMonthlyExam('${s.id}',this.value)" class="mobile-score border rounded-lg text-center py-2 w-full"></label>
     </div>
     <div class="grid grid-cols-2 gap-2 mt-4 text-center"><div class="bg-slate-50 rounded-xl p-2"><div class="text-xs text-slate-500">المجموع الشفوي</div><b>${cont} / 100</b></div><div class="bg-slate-50 rounded-xl p-2"><div class="text-xs text-slate-500">الدرجة النهائية</div><b>${fmt(final)} / 100</b></div></div>
-    <label class="block mt-3"><span class="text-xs font-bold text-slate-600">التقييم العام</span><select onchange="setOverall('${s.id}',this.value)" class="w-full border rounded-lg px-3 py-2 mt-1"><option value="">اختر التقييم</option>${['ممتاز','جيد جداً','جيد','مقبول','بحاجة لتحسين'].map(x=>`<option ${d.overall===x?'selected':''}>${x}</option>`).join('')}</select></label>
-    <div class="grid grid-cols-2 gap-2 mt-3"><button type="button" onclick="openQrModal('${s.id}')" class="bg-violet-600 text-white py-2 rounded-xl font-bold"><i class="fa-solid fa-qrcode ml-1"></i>QR ولي الأمر</button><button type="button" onclick="openReport('${s.id}')" class="bg-sky-600 text-white py-2 rounded-xl font-bold"><i class="fa-solid fa-chart-column ml-1"></i>فتح السجل</button></div>
+    <div class="mt-3"><span class="text-xs font-bold text-slate-600">التقييم العام</span><div class="w-full bg-slate-50 border rounded-lg px-3 py-2 mt-1 font-bold">${automaticEvaluation(final)}</div></div>
+    <div class="grid grid-cols-2 gap-2 mt-3"><button type="button" onclick="openReport('${s.id}')" class="bg-sky-600 text-white py-2 rounded-xl font-bold"><i class="fa-solid fa-chart-column ml-1"></i>فتح السجل</button></div>
   </article>`;
 }
 
+function getMonthDataFor(month, section){
+  const key=`${state.settings.subject}__${month}__${section||'أ'}`;
+  if(state.months && state.months[key]) return state.months[key];
+  const legacy=`${state.settings.subject}__${month}`;
+  if((section||'أ')==='أ' && state.months && state.months[legacy]) return state.months[legacy];
+  return {};
+}
+function studentMonthData(id,month,section){
+  const md=getMonthDataFor(month,section);
+  return md[id] || {shortTests:0,dailyPrep:0,homework:0,notebook:0,absence:0,behavior:0,monthlyExam:0};
+}
+function hasCompleteScores(d){return CATEGORIES.every(([key])=>Number(d[key]||0)>0) && Number(d.monthlyExam||0)>0;}
 function renderTable(){
   renderHeader();
   const q=($('search').value||'').trim().toLowerCase();
+  const evalFilter=$('evaluationFilter')?.value||'all';
+  const incompleteOnly=$('incompleteOnly')?.checked||false;
   const sec=state.settings.section||'أ';
   const sectionStudents=state.students.filter(s=>(s.section||'أ')===sec);
-  const list=sectionStudents.filter(s=>s.name.toLowerCase().includes(q));
+  const list=sectionStudents.filter(s=>{
+    const d=ensureStudentData(s.id), final=finalGrade(d);
+    const matchesName=s.name.toLowerCase().includes(q);
+    const matchesEval=evalFilter==='all'||automaticEvaluation(final)===evalFilter;
+    const matchesIncomplete=!incompleteOnly||!hasCompleteScores(d);
+    return matchesName&&matchesEval&&matchesIncomplete;
+  });
   $('currentSectionLabel').textContent=sec;
   const noStudents=sectionStudents.length===0;
   $('emptyState').classList.toggle('hidden',!noStudents);
   $('tableWrap').classList.toggle('hidden',noStudents);
   $('mobileStudents').classList.toggle('hidden',list.length===0);
-  $('tableBody').innerHTML=list.map(renderDesktopRow).join('')||`<tr><td colspan="20" class="text-center p-8 text-slate-500">لا توجد نتائج مطابقة للبحث.</td></tr>`;
+  $('tableBody').innerHTML=list.map(renderDesktopRow).join('')||`<tr><td colspan="20" class="text-center p-8 text-slate-500">لا توجد نتائج مطابقة للفلاتر الحالية.</td></tr>`;
   $('mobileStudents').innerHTML=list.map(renderMobileCard).join('');
   renderStats();
+  renderAnalytics();
+  updateProgressStudents();
+  renderStage2();
 }
-
 function renderStats(){
   const sec=state.settings.section||'أ';
   const students=(state.students||[]).filter(s=>(s.section||'أ')===sec);
   const data=students.map(s=>ensureStudentData(s.id));
-  const finals=data.map(finalGrade);
-  const completed=data.filter(d=>CATEGORIES.every(([key])=>Number(d[key]||0)>0)&&Number(d.monthlyExam||0)>0).length;
+  const completed=data.filter(hasCompleteScores);
+  const finals=completed.map(finalGrade);
   const avg=finals.length?finals.reduce((a,b)=>a+b,0)/finals.length:0;
   const high=finals.length?Math.max(...finals):0;
   $('statStudents').textContent=students.length.toLocaleString('ar-IQ');
-  $('statCompleted').textContent=completed.toLocaleString('ar-IQ');
+  $('statCompleted').textContent=completed.length.toLocaleString('ar-IQ');
   $('statAverage').textContent=finals.length?fmt(avg):'—';
   $('statHighest').textContent=finals.length?fmt(high):'—';
 }
-
-function hasCompleteScores(data){return CATEGORIES.every(([key])=>Number(data[key]||0)>0)&&Number(data.monthlyExam||0)>0;}
-function automaticEvaluation(score){score=Number(score)||0;if(score>=90)return 'ممتاز';if(score>=80)return 'جيد جداً';if(score>=70)return 'جيد';if(score>=60)return 'مقبول';if(score>=50)return 'مقبول';return 'ضعيف';}
-function openClassReport(){
+function renderAnalytics(){
   const sec=state.settings.section||'أ';
   const students=state.students.filter(s=>(s.section||'أ')===sec);
-  const completed=students.filter(s=>hasCompleteScores(ensureStudentData(s.id)));
-  const successful=completed.filter(s=>finalGrade(ensureStudentData(s.id))>=50);
-  const successRate=completed.length?Math.round(successful.length/completed.length*100):0;
-  const finals=completed.map(s=>finalGrade(ensureStudentData(s.id)));
+  const counts={'ممتاز':0,'جيد جداً':0,'جيد':0,'متوسط':0,'مقبول':0,'ضعيف':0};
+  students.forEach(s=>counts[automaticEvaluation(finalGrade(ensureStudentData(s.id)))]++);
+  const total=students.length;
+  const order=['ممتاز','جيد جداً','جيد','متوسط','مقبول','ضعيف'];
+  $('evaluationDistribution').innerHTML=total?order.map(label=>{
+    const n=counts[label],pct=Math.round(n/total*100);
+    return `<div><div class="flex justify-between text-sm mb-1"><span class="font-bold">${label}</span><span>${n.toLocaleString('ar-IQ')} تلميذ (${pct.toLocaleString('ar-IQ')}٪)</span></div><div class="h-3 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-sky-500 rounded-full" style="width:${pct}%"></div></div></div>`;
+  }).join(''):'<div class="text-center text-slate-400 py-8">لا توجد بيانات لعرض التحليل.</div>';
+}
+function updateProgressStudents(){
+  const sel=$('progressStudent');if(!sel)return;
+  const sec=state.settings.section||'أ';
+  const current=sel.value;
+  const students=state.students.filter(s=>(s.section||'أ')===sec);
+  sel.innerHTML='<option value="">اختر تلميذاً</option>'+students.map(s=>`<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('');
+  if(students.some(s=>s.id===current))sel.value=current;
+  renderProgress();
+}
+function renderProgress(){
+  const sel=$('progressStudent');const box=$('progressContent');if(!sel||!box)return;
+  const id=sel.value;
+  if(!id){box.innerHTML='اختر تلميذاً لعرض تطور درجاته.';return;}
+  const s=state.students.find(x=>x.id===id);if(!s){box.innerHTML='';return;}
+  const vals=MONTHS.map(m=>({month:m,grade:finalGrade(studentMonthData(id,m,s.section))}));
+  const entered=MONTHS.filter(m=>{
+    const d=studentMonthData(id,m,s.section);return Object.values(d).some(v=>Number(v||0)>0);
+  });
+  if(!entered.length){box.innerHTML='<div class="text-center text-slate-400 py-8">لا توجد درجات مسجلة لهذا التلميذ في الأشهر الحالية.</div>';return;}
+  const max=Math.max(...vals.map(x=>x.grade),1);
+  const first=vals.find(x=>entered.includes(x.month));
+  const last=[...vals].reverse().find(x=>entered.includes(x.month));
+  const delta=first&&last?last.grade-first.grade:0;
+  box.innerHTML=`<div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4">${vals.map(v=>`<div class="border rounded-xl p-2 text-center bg-slate-50"><div class="text-[11px] text-slate-500">${v.month}</div><div class="font-extrabold text-lg">${fmt(v.grade)}</div><div class="h-1.5 bg-slate-200 rounded-full mt-1"><div class="h-full bg-sky-500 rounded-full" style="width:${Math.round(v.grade/max*100)}%"></div></div></div>`).join('')}</div><div class="flex flex-wrap gap-3 text-sm"><span class="px-3 py-2 rounded-xl bg-slate-50 border">أول درجة مسجلة: <b>${first?fmt(first.grade):'—'}</b></span><span class="px-3 py-2 rounded-xl bg-slate-50 border">آخر درجة مسجلة: <b>${last?fmt(last.grade):'—'}</b></span><span class="px-3 py-2 rounded-xl bg-slate-50 border">التغير: <b>${delta>0?'+':''}${fmt(delta)}</b></span></div>`;
+}
+
+function getCurrentSectionStudents(){
+  const sec=state.settings.section||'أ';
+  return state.students.filter(s=>(s.section||'أ')===sec);
+}
+function studentStatus(d){
+  if(!hasCompleteScores(d)) return 'بيانات ناقصة';
+  return automaticEvaluation(finalGrade(d));
+}
+function renderRanking(){
+  const students=getCurrentSectionStudents();
+  const rows=students.map(s=>({s,d:ensureStudentData(s.id),final:finalGrade(ensureStudentData(s.id))})).sort((a,b)=>b.final-a.final||a.s.name.localeCompare(b.s.name,'ar'));
+  const body=$('rankingBody'); if(!body)return;
+  body.innerHTML=rows.length?rows.map((r,i)=>`<tr class="border-t hover:bg-slate-50"><td class="p-2 font-extrabold">${i+1}</td><td class="p-2 font-bold">${escapeHtml(r.s.name)}</td><td class="p-2 text-center font-extrabold">${fmt(r.final)} / 100</td><td class="p-2 text-center font-bold">${automaticEvaluation(r.final)}</td><td class="p-2 text-center"><span class="px-2 py-1 rounded-lg text-xs font-bold ${hasCompleteScores(r.d)?'bg-emerald-50 text-emerald-700':'bg-amber-50 text-amber-700'}">${studentStatus(r.d)}</span></td></tr>`).join(''):`<tr><td colspan="5" class="p-6 text-center text-slate-400">لا توجد تلاميذ في الشعبة الحالية.</td></tr>`;
+}
+function renderAlerts(){
+  const students=getCurrentSectionStudents(); const incomplete=students.filter(s=>!hasCompleteScores(ensureStudentData(s.id)));
+  const weak=students.filter(s=>hasCompleteScores(ensureStudentData(s.id)) && finalGrade(ensureStudentData(s.id))<50);
+  const improving=[];
+  students.forEach(s=>{const entered=MONTHS.map(m=>({m,d:studentMonthData(s.id,m,s.section)})).filter(x=>Object.values(x.d).some(v=>Number(v||0)>0)); if(entered.length>=2){const a=finalGrade(entered[0].d),b=finalGrade(entered[entered.length-1].d); if(b-a>=10) improving.push(s);}});
+  const items=[];
+  if(incomplete.length) items.push(`<div class="border rounded-xl p-3 bg-amber-50 border-amber-200"><b>درجات ناقصة:</b> ${incomplete.length} تلميذ</div>`);
+  if(weak.length) items.push(`<div class="border rounded-xl p-3 bg-rose-50 border-rose-200"><b>يحتاجون إلى متابعة:</b> ${weak.length} تلميذ بدرجة أقل من ٥٠</div>`);
+  if(improving.length) items.push(`<div class="border rounded-xl p-3 bg-emerald-50 border-emerald-200"><b>تحسن ملحوظ:</b> ${improving.length} تلميذ</div>`);
+  $('alertsPanel').innerHTML=items.length?items.join(''):`<div class="text-center text-slate-400 py-8">لا توجد تنبيهات حالياً.</div>`;
+}
+function renderClassSummary(){
+  const students=getCurrentSectionStudents(); const completed=students.filter(s=>hasCompleteScores(ensureStudentData(s.id))); const finals=completed.map(s=>finalGrade(ensureStudentData(s.id)));
+  const counts={'ممتاز':0,'جيد جداً':0,'جيد':0,'متوسط':0,'مقبول':0,'ضعيف':0}; completed.forEach(s=>counts[automaticEvaluation(finalGrade(ensureStudentData(s.id)))]++);
   const avg=finals.length?Math.round(finals.reduce((a,b)=>a+b,0)/finals.length):0;
-  const rows=students.map((s,i)=>{const d=ensureStudentData(s.id),f=finalGrade(d),complete=hasCompleteScores(d);return `<tr class="border-t"><td class="p-2 text-center">${i+1}</td><td class="p-2 font-bold">${escapeHtml(s.name)}</td><td class="p-2 text-center">${complete?fmt(f):'—'}</td><td class="p-2 text-center">${complete?automaticEvaluation(f):'بيانات ناقصة'}</td></tr>`}).join('');
-  $('classReportSubtitle').textContent=`${state.settings.school||'المدرسة'} — ${state.settings.className||'الصف'} — الشعبة ${sec} — ${state.settings.subject} — ${state.settings.month}`;
-  $('classReportContent').innerHTML=`<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5"><div class="bg-slate-50 rounded-xl p-3 text-center">عدد التلاميذ<br><b class="text-xl">${students.length}</b></div><div class="bg-slate-50 rounded-xl p-3 text-center">الدرجات المكتملة<br><b class="text-xl">${completed.length}</b></div><div class="bg-slate-50 rounded-xl p-3 text-center">الناجحون<br><b class="text-xl">${successful.length}</b></div><div class="bg-slate-50 rounded-xl p-3 text-center">نسبة النجاح<br><b class="text-xl">${successRate}٪</b></div><div class="bg-slate-50 rounded-xl p-3 text-center">معدل الشعبة<br><b class="text-xl">${avg||'—'}</b></div></div><div class="overflow-auto border rounded-xl"><table class="w-full text-sm text-center"><thead class="bg-slate-50"><tr><th class="p-2">الترتيب</th><th class="p-2 text-right">التلميذ</th><th class="p-2">الدرجة النهائية</th><th class="p-2">التقييم</th></tr></thead><tbody>${rows||'<tr><td colspan="4" class="p-6">لا توجد تلاميذ.</td></tr>'}</tbody></table></div><div class="flex justify-end gap-2 mt-5"><button type="button" onclick="printClassReport()" class="bg-slate-900 text-white px-5 py-2.5 rounded-xl font-bold"><i class="fa-solid fa-print ml-1"></i> طباعة التقرير</button></div>`;
-  openModal('classReportModal');
+  const items=[['التلاميذ',students.length],['المكتملة',completed.length],['المتوسط',finals.length?avg:'—'],['ممتاز',counts['ممتاز']],['جيد جداً',counts['جيد جداً']],['جيد',counts['جيد']],['ضعيف',counts['ضعيف']]];
+  $('classSummary').innerHTML=items.map(x=>`<div class="border rounded-xl p-3 bg-slate-50 text-center"><div class="text-xs text-slate-500">${x[0]}</div><div class="text-xl font-extrabold mt-1">${typeof x[1]==='number'?x[1].toLocaleString('ar-IQ'):x[1]}</div></div>`).join('');
+}
+function renderStage2(){renderRanking();renderAlerts();renderClassSummary();}
+function openClassReport(){
+  const students=getCurrentSectionStudents(), completed=students.filter(s=>hasCompleteScores(ensureStudentData(s.id))), finals=completed.map(s=>finalGrade(ensureStudentData(s.id))), avg=finals.length?Math.round(finals.reduce((a,b)=>a+b,0)/finals.length):0;
+  const counts={'ممتاز':0,'جيد جداً':0,'جيد':0,'متوسط':0,'مقبول':0,'ضعيف':0}; completed.forEach(s=>counts[automaticEvaluation(finalGrade(ensureStudentData(s.id)))]++);
+  const top=[...students].sort((a,b)=>finalGrade(ensureStudentData(b.id))-finalGrade(ensureStudentData(a.id))).slice(0,10);
+  const box=document.createElement('div'); box.id='classReportTemp'; box.className='fixed inset-0 modal-backdrop z-[120] flex items-center justify-center p-4'; box.innerHTML=`<div class="modal bg-white w-full max-w-4xl max-h-[90vh] overflow-auto rounded-2xl shadow-2xl"><div class="p-5 border-b flex justify-between items-center"><div><h2 class="text-xl font-extrabold">تقرير الشعبة</h2><p class="text-sm text-slate-500">${escapeHtml(state.settings.school||'المدرسة')} — ${escapeHtml(state.settings.className||'الصف')} — الشعبة ${state.settings.section||'أ'} — ${state.settings.month}</p></div><button type="button" onclick="document.getElementById('classReportTemp')?.remove()" class="text-slate-400 text-xl"><i class="fa-solid fa-xmark"></i></button></div><div class="p-5"><div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5"><div class="bg-slate-50 p-3 rounded-xl">عدد التلاميذ<br><b>${students.length}</b></div><div class="bg-slate-50 p-3 rounded-xl">المكتملة<br><b>${completed.length}</b></div><div class="bg-slate-50 p-3 rounded-xl">معدل الشعبة<br><b>${avg||'—'}</b></div><div class="bg-slate-50 p-3 rounded-xl">درجات ناقصة<br><b>${students.length-completed.length}</b></div></div><div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-5">${Object.entries(counts).map(([k,v])=>`<div class="border rounded-xl p-3 text-center"><div class="text-xs text-slate-500">${k}</div><b>${v}</b></div>`).join('')}</div><h3 class="font-extrabold mb-2">الترتيب الحالي</h3><div class="overflow-auto border rounded-xl"><table class="w-full text-sm"><thead class="bg-slate-50"><tr><th class="p-2">الترتيب</th><th class="p-2 text-right">التلميذ</th><th class="p-2">الدرجة</th><th class="p-2">التقييم</th></tr></thead><tbody>${top.map((s,i)=>{const f=finalGrade(ensureStudentData(s.id));return `<tr class="border-t"><td class="p-2 text-center">${i+1}</td><td class="p-2 font-bold">${escapeHtml(s.name)}</td><td class="p-2 text-center">${fmt(f)}</td><td class="p-2 text-center">${automaticEvaluation(f)}</td></tr>`}).join('')}</tbody></table></div></div><div class="p-5 border-t flex justify-end"><button type="button" onclick="printClassReport()" class="bg-slate-900 text-white px-5 py-2.5 rounded-xl font-bold"><i class="fa-solid fa-print ml-1"></i> طباعة التقرير</button></div></div>`; document.body.appendChild(box);
 }
 function printClassReport(){
- const sec=state.settings.section||'أ'; const students=state.students.filter(s=>(s.section||'أ')===sec); const completed=students.filter(s=>hasCompleteScores(ensureStudentData(s.id))); const successful=completed.filter(s=>finalGrade(ensureStudentData(s.id))>=50); const rate=completed.length?Math.round(successful.length/completed.length*100):0; const rows=students.map((s,i)=>{const d=ensureStudentData(s.id),f=finalGrade(d),c=hasCompleteScores(d);return `<tr><td>${i+1}</td><td>${escapeHtml(s.name)}</td><td>${c?fmt(f):'—'}</td><td>${c?automaticEvaluation(f):'بيانات ناقصة'}</td></tr>`}).join(''); const w=window.open('','_blank'); if(!w)return; w.document.write(`<html dir="rtl"><head><meta charset="utf-8"><title>تقرير الشعبة</title><style>body{font-family:Arial;padding:25px}h1,h2{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #999;padding:8px;text-align:center}th{background:#eee}.summary{display:flex;gap:12px;justify-content:center;margin:18px 0}.box{border:1px solid #bbb;padding:10px;text-align:center;min-width:130px}</style></head><body><h1>تقرير الشعبة</h1><h2>${escapeHtml(state.settings.school||'المدرسة')}</h2><p style="text-align:center">${escapeHtml(state.settings.className||'الصف')} — الشعبة ${sec} — ${escapeHtml(state.settings.subject)} — ${escapeHtml(state.settings.month)}</p><div class="summary"><div class="box">عدد التلاميذ<br><b>${students.length}</b></div><div class="box">الدرجات المكتملة<br><b>${completed.length}</b></div><div class="box">الناجحون<br><b>${successful.length}</b></div><div class="box">نسبة النجاح<br><b>${rate}٪</b></div></div><table><tr><th>الترتيب</th><th>اسم التلميذ</th><th>الدرجة النهائية</th><th>التقييم</th></tr>${rows}</table><script>window.onload=()=>window.print()<\/script></body></html>`); w.document.close();
+  const students=getCurrentSectionStudents();
+  const completed=students.filter(s=>hasCompleteScores(ensureStudentData(s.id)));
+  const finals=completed.map(s=>finalGrade(ensureStudentData(s.id)));
+  const avg=finals.length?Math.round(finals.reduce((a,b)=>a+b,0)/finals.length):0;
+  const highest=finals.length?Math.max(...finals):0;
+  const lowest=finals.length?Math.min(...finals):0;
+  const counts={'ممتاز':0,'جيد جداً':0,'جيد':0,'متوسط':0,'مقبول':0,'ضعيف':0};
+  completed.forEach(s=>counts[automaticEvaluation(finalGrade(ensureStudentData(s.id)))]++);
+  const ordered=[...students].sort((a,b)=>finalGrade(ensureStudentData(b.id))-finalGrade(ensureStudentData(a.id)));
+  const rows=ordered.map((s,i)=>{
+    const d=ensureStudentData(s.id), f=finalGrade(d), complete=hasCompleteScores(d);
+    return `<tr><td>${i+1}</td><td class="name">${escapeHtml(s.name)}</td>${CATEGORIES.map(([key,label,max])=>`<td>${d[key]} / ${max}</td>`).join('')}<td><b>${continuousTotal(d)} / 100</b></td><td>${d.monthlyExam} / 100</td><td><b>${fmt(f)} / 100</b></td><td>${complete?automaticEvaluation(f):'بيانات ناقصة'}</td></tr>`;
+  }).join('');
+  const summary=`<div class="summary-grid">
+    <div><span>عدد التلاميذ</span><b>${students.length}</b></div>
+    <div><span>الدرجات المكتملة</span><b>${completed.length}</b></div>
+    <div><span>معدل الشعبة</span><b>${avg||'—'}</b></div>
+    <div><span>أعلى درجة</span><b>${highest||'—'}</b></div>
+    <div><span>أدنى درجة</span><b>${lowest||'—'}</b></div>
+    <div><span>ممتاز</span><b>${counts['ممتاز']}</b></div>
+    <div><span>جيد جداً</span><b>${counts['جيد جداً']}</b></div>
+    <div><span>جيد</span><b>${counts['جيد']}</b></div>
+    <div><span>متوسط</span><b>${counts['متوسط']}</b></div>
+    <div><span>مقبول</span><b>${counts['مقبول']}</b></div>
+    <div><span>ضعيف</span><b>${counts['ضعيف']}</b></div>
+    <div><span>بيانات ناقصة</span><b>${students.length-completed.length}</b></div>
+  </div>`;
+  const school_img = '';
+  const min_img = '';
+  const w=window.open('','_blank');
+  if(!w){ alert('يرجى السماح بالنوافذ المنبثقة لهذا الموقع، ثم الضغط على طباعة التقرير مرة أخرى.'); return; }
+  w.document.write(`<!doctype html><html dir="rtl"><head><meta charset="utf-8"><title>تقرير الشعبة</title><style>
+    @page{size:A4 landscape;margin:12mm}
+    *{box-sizing:border-box}body{font-family:Cairo,Arial,sans-serif;color:#111;margin:0;font-size:11px}
+    .header{display:grid;grid-template-columns:90px 1fr 90px;direction:ltr;align-items:center;gap:18px;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:14px}
+    .logo{width:82px;height:82px;object-fit:contain}.center{direction:rtl;text-align:center;line-height:1.65}.center .main{font-size:16px;font-weight:800}.center .sub{font-size:12px}.title{text-align:center;font-size:18px;font-weight:800;margin:8px 0 14px}
+    .info{width:100%;border-collapse:collapse;margin-bottom:12px}.info td{border:1px solid #aaa;padding:7px}.info b{margin-left:4px}
+    .summary-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin:8px 0 14px}.summary-grid div{border:1px solid #bbb;background:#f7f7f7;border-radius:5px;padding:5px;text-align:center}.summary-grid span{display:block;font-size:9px;color:#555}.summary-grid b{display:block;font-size:13px;margin-top:2px}
+    table.main{width:100%;border-collapse:collapse;text-align:center;font-size:9px}table.main th,table.main td{border:1px solid #999;padding:5px;vertical-align:middle}table.main th{background:#eee;font-weight:800}table.main .name{text-align:right;white-space:nowrap;font-weight:700}
+    .sign{margin-top:28px;display:flex;justify-content:space-around;text-align:center;font-size:11px}.sign div{min-width:220px}.note{margin-top:10px;color:#666;font-size:9px;text-align:center}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}thead{display:table-header-group}tr{page-break-inside:avoid}}
+  </style></head><body>
+    <div class="header"><div><img class="logo" src="${school_img}" alt="شعار المدرسة"></div><div class="center"><div class="main">جمهورية العراق</div><div class="main">وزارة التربية</div><div class="sub">المديرية العامة لتربية ذي قار</div><div class="sub">قسم تربية الشطرة</div><div class="sub">${escapeHtml(state.settings.school||'مدرسة النقاء الابتدائية المختلطة')}</div></div><div><img class="logo" src="${min_img}" alt="شعار وزارة التربية"></div></div>
+    <div class="title">تقرير متابعة الشعبة</div>
+    <table class="info"><tr><td><b>الصف:</b> ${escapeHtml(state.settings.className||'')}</td><td><b>الشعبة:</b> ${escapeHtml(state.settings.section||'أ')}</td><td><b>المادة:</b> ${escapeHtml(state.settings.subject||'')}</td></tr><tr><td><b>الشهر:</b> ${escapeHtml(state.settings.month||'')}</td><td><b>العام الدراسي:</b> ٢٠٢٦ - ٢٠٢٧</td><td><b>المعلم:</b> كرار علي كامل</td></tr></table>
+    ${summary}
+    <table class="main"><thead><tr><th>ت</th><th>اسم التلميذ</th>${CATEGORIES.map(([key,label,max])=>`<th>${label}<br>/${max}</th>`).join('')}<th>المجموع الشفوي<br>/ 100</th><th>الامتحان الشهري<br>/ 100</th><th>الدرجة النهائية<br>/ 100</th><th>التقييم</th></tr></thead><tbody>${rows||'<tr><td colspan="13" style="padding:18px">لا توجد بيانات.</td></tr>'}</tbody></table>
+    <div class="note">الدرجة النهائية = جبر ((المجموع الشفوي + الامتحان الشهري) ÷ ٢)، والتقييم محسوب تلقائياً وفق الدرجة النهائية.</div>
+    <div class="sign"><div>معلم المادة<br><b>كرار علي كامل</b><br>____________________<br>التوقيع</div><div>مدير المدرسة<br><b>سعود محسن احمد</b><br>____________________<br>التوقيع والختم</div></div>
+    <script>window.onload=()=>setTimeout(()=>window.print(),250)<\/script></body></html>`);w.document.close();
 }
 
 function resetStudentMonth(id){
@@ -477,52 +626,6 @@ function deleteStudent(id){
   Object.values(state.months).forEach(m=>delete m[id]);
   saveState();renderTable();
 }
-
-let currentQrId=null;
-function buildParentSnapshot(id){
-  const student=state.students.find(s=>s.id===id);
-  if(!student)return null;
-  const months=MONTHS.map(month=>{
-    const key=`${state.settings.subject}__${month}__${student.section||'أ'}`;
-    const d=state.months[key]?.[id];
-    if(!d)return null;
-    const normalized={}; CATEGORIES.forEach(([k,,max])=>normalized[k]=Math.min(max,Number(d[k]||0)));
-    normalized.monthlyExam=Math.min(100,Number(d.monthlyExam||0));
-    normalized.final=finalGrade(normalized);
-    normalized.overall=d.overall||'';
-    return {month,data:normalized};
-  }).filter(Boolean);
-  return {v:1,name:student.name,school:state.settings.school,className:state.settings.className,subject:state.settings.subject,months};
-}
-function openQrModal(id){
-  currentQrId=id; const s=state.students.find(x=>x.id===id); if(!s)return;
-  const box=$('qrBox'); box.innerHTML='';
-  const snapshot=buildParentSnapshot(id);
-  const payload=btoa(unescape(encodeURIComponent(JSON.stringify(snapshot))));
-  new QRCode(box,{text:location.origin+location.pathname+'#parent='+encodeURIComponent(payload),width:230,height:230,colorDark:'#0f172a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
-  $('qrStudentName').textContent=`${s.name} — ${state.settings.className||''} / الشعبة ${s.section||'أ'}`;
-  openModal('qrModal');
-}
-function downloadQr(){
-  const img=$('qrBox').querySelector('img'); if(!img)return;
-  const a=document.createElement('a'); a.href=img.src; a.download=`QR - ${state.students.find(s=>s.id===currentQrId)?.name||'تلميذ'}.png`; a.click();
-}
-function printQr(){
-  const s=state.students.find(x=>x.id===currentQrId); if(!s)return;
-  const img=$('qrBox').querySelector('img'); if(!img)return;
-  const w=window.open('','_blank');
-  w.document.write(`<html dir=\"rtl\"><head><title>QR - ${escapeHtml(s.name)}</title><style>body{font-family:Arial;text-align:center;padding:40px}img{width:280px}h2{margin-bottom:8px}</style></head><body><h2>رمز متابعة درجات التلميذ</h2><h3>${escapeHtml(s.name)}</h3><p>${escapeHtml(state.settings.school||'')} — ${escapeHtml(state.settings.className||'')} — الشعبة ${escapeHtml(s.section||'أ')}</p><img src=\"${img.src}\"><p>يمثل درجات الأشهر المحفوظة وقت إنشاء الرمز.</p>setTimeout(()=>w.print(),300)</body></html>`); w.document.close();
-}
-function openParentFromHash(){
-  if(!location.hash.startsWith('#parent='))return;
-  try{
-    const raw=decodeURIComponent(location.hash.slice(8));
-    const obj=JSON.parse(decodeURIComponent(escape(atob(raw))));
-    const rows=(obj.months||[]).map(x=>{const d=x.data;return `<tr><td>${escapeHtml(x.month)}</td><td>${d.shortTests}/${20}</td><td>${d.dailyPrep}/${20}</td><td>${d.homework}/${20}</td><td>${d.notebook}/${20}</td><td>${d.absence}/${10}</td><td>${d.behavior}/${10}</td><td><b>${d.final}/100</b></td></tr>`}).join('');
-    document.body.innerHTML=`<div dir=\"rtl\" style=\"font-family:Cairo,Arial;background:#f1f5f9;min-height:100vh;padding:20px\"><div style=\"max-width:1000px;margin:auto;background:white;border-radius:20px;padding:22px;box-shadow:0 8px 30px #0001\"><h1 style=\"margin:0 0 6px;color:#0f172a\">متابعة درجات التلميذ</h1><p style=\"color:#64748b\">${escapeHtml(obj.school||'')} — ${escapeHtml(obj.className||'')} — ${escapeHtml(obj.subject||'')}</p><h2>${escapeHtml(obj.name)}</h2><div style=\"overflow:auto\"><table style=\"width:100%;border-collapse:collapse;text-align:center\"><thead><tr style=\"background:#0f172a;color:#fff\"><th>الشهر</th><th>اختبارات</th><th>تحضير</th><th>واجب</th><th>دفتر</th><th>غياب</th><th>سلوك</th><th>النهائية</th></tr></thead><tbody>${rows||'<tr><td colspan=\"8\" style=\"padding:20px\">لا توجد درجات منشورة بعد.</td></tr>'}</tbody></table></div><p style=\"margin-top:18px;color:#64748b;font-size:13px\">هذه البيانات هي نسخة محفوظة وقت إنشاء رمز QR.</p></div></div>`;
-  }catch(e){document.body.innerHTML='<div dir=\"rtl\" style=\"font-family:Arial;padding:40px;text-align:center\"><h2>تعذر قراءة رمز QR</h2><p>يرجى طلب رمز محدث من المعلم.</p></div>';}
-}
-
 function openReport(id){
   const s=state.students.find(x=>x.id===id);if(!s)return;
   currentReportId=id;
@@ -534,18 +637,17 @@ function openReport(id){
       <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">المجموع الشفوي</div><div class="text-2xl font-extrabold">${continuousTotal(d)} / 100</div></div>
       <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">الامتحان الشهري</div><div class="text-2xl font-extrabold">${d.monthlyExam} / 100</div></div>
       <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">الدرجة النهائية</div><div class="text-2xl font-extrabold">${fmt(finalGrade(d))} / 100</div></div>
-      <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">التقييم</div><div class="font-bold mt-1">${d.overall||'غير محدد'}</div></div>
+      <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">التقييم</div><div class="font-bold mt-1">${automaticEvaluation(finalGrade(d))}</div></div>
     </div>
     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
       ${CATEGORIES.map(([key,label,max])=>`<label class="block"><span class="font-bold block mb-2">${label} (${max})</span><input type="number" inputmode="numeric" min="0" max="${max}" value="${d[key]}" onchange="setCategoryScore('${s.id}','${key}',this.value);openReport('${s.id}')" class="w-full border rounded-xl px-4 py-2.5"></label>`).join('')}
       <label class="block"><span class="font-bold block mb-2">الامتحان الشهري (١٠٠)</span><input type="number" inputmode="numeric" min="0" max="100" value="${d.monthlyExam}" onchange="setMonthlyExam('${s.id}',this.value);openReport('${s.id}')" class="w-full border rounded-xl px-4 py-2.5"></label>
     </div>
-    <div class="mt-5"><label class="font-bold block mb-2">التقييم العام</label><select onchange="setOverallFromReport(this.value)" class="border rounded-xl px-4 py-2.5 w-full"><option value="">اختر التقييم</option>${['ممتاز','جيد جداً','جيد','مقبول','بحاجة لتحسين'].map(x=>`<option ${d.overall===x?'selected':''}>${x}</option>`).join('')}</select></div>
-    <div class="flex flex-wrap justify-end gap-2 mt-5"><button type="button" onclick="openQrModal('${s.id}')" class="bg-violet-600 text-white px-5 py-2.5 rounded-xl font-bold"><i class="fa-solid fa-qrcode ml-1"></i> QR ولي الأمر</button><button type="button" onclick="printStudentReport()" class="bg-slate-900 text-white px-5 py-2.5 rounded-xl font-bold"><i class="fa-solid fa-print ml-1"></i> طباعة تقرير A4</button><button type="button" onclick="closeModal('reportModal')" class="border px-5 py-2.5 rounded-xl">إغلاق</button></div>`;
+    <div class="mt-5"><label class="font-bold block mb-2">التقييم العام</label><div class="border rounded-xl px-4 py-2.5 w-full bg-slate-50 font-bold">${automaticEvaluation(finalGrade(d))}</div></div>
+    <div class="flex flex-wrap justify-end gap-2 mt-5"><button type="button" onclick="printStudentReport()" class="bg-slate-900 text-white px-5 py-2.5 rounded-xl font-bold"><i class="fa-solid fa-print ml-1"></i> طباعة تقرير A4</button><button type="button" onclick="closeModal('reportModal')" class="border px-5 py-2.5 rounded-xl">إغلاق</button></div>`;
   openModal('reportModal');
 }
 
-function setOverallFromReport(value){if(!currentReportId)return;ensureStudentData(currentReportId).overall=value;saveState();openReport(currentReportId)}
 
 function printStudentReport(){
   const s=state.students.find(x=>x.id===currentReportId);if(!s)return;
@@ -570,7 +672,7 @@ function printStudentReport(){
       <tr><td style="border:1px solid #aaa;padding:8px"><b>المجموع الشفوي</b></td><td style="border:1px solid #aaa;padding:8px;text-align:center"><b>${continuousTotal(d)} / 100</b></td></tr>
       <tr><td style="border:1px solid #aaa;padding:8px">الامتحان الشهري</td><td style="border:1px solid #aaa;padding:8px;text-align:center">${d.monthlyExam} / 100</td></tr>
       <tr><td style="border:1px solid #aaa;padding:8px"><b>الدرجة النهائية</b></td><td style="border:1px solid #aaa;padding:8px;text-align:center"><b>${fmt(finalGrade(d))} / 100</b></td></tr>
-      <tr><td style="border:1px solid #aaa;padding:8px">التقييم العام</td><td style="border:1px solid #aaa;padding:8px;text-align:center">${escapeHtml(d.overall||'غير محدد')}</td></tr>
+      <tr><td style="border:1px solid #aaa;padding:8px">التقييم العام</td><td style="border:1px solid #aaa;padding:8px;text-align:center">${escapeHtml(automaticEvaluation(finalGrade(d)))}</td></tr>
     </table>
     <div style="margin-top:70px;display:flex;justify-content:space-around;text-align:center"><div>معلم المادة<br><b>كرار علي كامل</b><br>____________________<br>التوقيع</div><div>مدير المدرسة<br><b>سعود محسن احمد</b><br>____________________<br>التوقيع والختم</div></div>
   </div>`;
@@ -589,7 +691,7 @@ function exportExcel(){
     r['المجموع الشفوي (١٠٠)']=continuousTotal(d);
     r['الامتحان الشهري (١٠٠)']=d.monthlyExam;
     r['الدرجة النهائية (المجموع ÷ ٢)']=finalGrade(d);
-    r['التقييم العام']=d.overall||'';
+    r['التقييم العام']=automaticEvaluation(finalGrade(d));
     return r;
   });
   const ws=XLSX.utils.json_to_sheet(rows);
